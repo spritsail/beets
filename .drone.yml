@@ -1,0 +1,36 @@
+services:
+  docker:
+    image: docker:dind
+    privileged: true
+
+pipeline:
+  build:
+    image: docker
+    environment:
+       - DOCKER_HOST=tcp://docker:2375
+    commands:
+       - docker build -t devbuild . 
+
+  test:
+    image: docker
+    environment:
+       - DOCKER_HOST=tcp://docker:2375
+    commands:
+      - apk add --no-cache curl grep
+      - docker run --name=DEV -d -p 8337:8337 devbuild
+      - sleep 10  # Wait for plex to start!
+      - docker logs DEV
+      - curl -sSL docker:8337/identity | tee /dev/stderr | grep -q "{\"albums\":0,\"items\":0}" 
+      - docker kill DEV #Not really needed, but keeps things quick
+
+  publish:
+    image: docker
+    secrets: [ DOCKER_USER, DOCKER_PASS ]
+    environment:
+       - DOCKER_HOST=tcp://docker:2375
+    commands:
+         #Grab just the version, not the hash. Used for tagging
+       - echo $DOCKER_USER
+       - docker tag devbuild adamant/beets:latest
+       - docker login -u $DOCKER_USER -p $DOCKER_PASS
+       - docker push adamant/beets

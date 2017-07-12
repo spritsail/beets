@@ -1,0 +1,5 @@
+#!/bin/sh
+
+[ ! -r "/config/config.yaml" ] && echo "plugins: web" >> /config/config.yaml
+
+exec "$@"
