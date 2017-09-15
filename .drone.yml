@@ -1,36 +1,33 @@
-services:
-  docker:
-    image: docker:dind
-    privileged: true
-
 pipeline:
   build:
     image: docker
-    environment:
-       - DOCKER_HOST=tcp://docker:2375
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
     commands:
-       - docker build -t devbuild . 
+       - docker build --no-cache --pull -t beets-dev . 
 
   test:
     image: docker
-    environment:
-       - DOCKER_HOST=tcp://docker:2375
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
     commands:
       - apk add --no-cache curl grep
-      - docker run --name=DEV -d -p 8337:8337 devbuild
+      - CON_NAME=$(docker run --rm -d -p 8337:8337 beets-dev)
       - sleep 10  # Wait for plex to start!
-      - docker logs DEV
-      - curl -sSL docker:8337/stats | tee /dev/stderr | grep -q "{\"albums\":0,\"items\":0}" 
-      - docker kill DEV #Not really needed, but keeps things quick
+      - docker logs $$CON_NAME
+      - curl -sSL $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$CON_NAME):8337/stats | tee /dev/stderr | grep -q "{\"albums\":0,\"items\":0}" 
+      - docker kill $$CON_NAME #Not really needed, but keeps things quick
 
   publish:
     image: docker
+    volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ DOCKER_USER, DOCKER_PASS ]
-    environment:
-       - DOCKER_HOST=tcp://docker:2375
     commands:
          #Grab just the version, not the hash. Used for tagging
        - echo $DOCKER_USER
-       - docker tag devbuild adamant/beets:latest
+       - docker tag beets-dev adamant/beets:latest
        - docker login -u $DOCKER_USER -p $DOCKER_PASS
        - docker push adamant/beets
+       - docker rmi beets-dev adamant/beets
+       - echo 'CONGRATS! SUCCESSFULLY BUILT BEETS'
