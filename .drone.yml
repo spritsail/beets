@@ -23,6 +23,8 @@ pipeline:
     volumes:
        - /var/run/docker.sock:/var/run/docker.sock
     secrets: [ DOCKER_USER, DOCKER_PASS ]
+    when:
+      event: [push, tag, deployment]
     commands:
          #Grab just the version, not the hash. Used for tagging
        - echo $DOCKER_USER
