@@ -1,6 +1,6 @@
-FROM alpine:3.6
+FROM alpine:3.7
 
-MAINTAINER Adam Dodman <"adam.dodman@gmx.com">
+LABEL maintainer="Adam Dodman <adam.dodman@gmx.com>"
 
 ENV BEETSDIR /config
 
