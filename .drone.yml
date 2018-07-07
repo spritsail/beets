@@ -1,35 +1,30 @@
 pipeline:
   build:
-    image: docker
-    volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
-    commands:
-       - docker build --no-cache --pull -t beets-dev . 
+    image: spritsail/docker-build
+    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
+    repo: beets-dev
 
   test:
     image: docker
-    volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
+    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
     commands:
       - apk add --no-cache curl grep
       - CON_NAME=$(docker run --rm -d -p 8337:8337 beets-dev)
       - sleep 10  # Wait for plex to start!
       - docker logs $$CON_NAME
-      - curl -sSL $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$CON_NAME):8337/stats | tee /dev/stderr | grep -q "{\"albums\":0,\"items\":0}" 
+      - curl -sSL $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$CON_NAME):8337/stats | tee /dev/stderr | grep -q '{"albums":0,"items":0}'
       - docker kill $$CON_NAME #Not really needed, but keeps things quick
 
   publish:
-    image: docker
-    volumes:
-       - /var/run/docker.sock:/var/run/docker.sock
-    secrets: [ DOCKER_USER, DOCKER_PASS ]
-    when:
-      event: [push, tag, deployment]
-    commands:
-         #Grab just the version, not the hash. Used for tagging
-       - echo $DOCKER_USER
-       - docker tag beets-dev adamant/beets:latest
-       - docker login -u $DOCKER_USER -p $DOCKER_PASS
-       - docker push adamant/beets
-       - docker rmi beets-dev adamant/beets
-       - echo 'CONGRATS! SUCCESSFULLY BUILT BEETS'
+    image: spritsail/docker-publish
+    when: { branch: [ master ], event: [ push, tag, deployment ] }
+    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
+    secrets: [ docker_username, docker_password, microbadger_token ]
+    from: beets-dev
+    repo: spritsail/beets
+
+  notify:
+    image: spritsail/notify
+    when: { status: [ success, failure ] }
+    secrets: [ webhook_url, notify_token ]
+
