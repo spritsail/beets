@@ -22,6 +22,9 @@ pipeline:
     secrets: [ docker_username, docker_password, microbadger_token ]
     from: beets-dev
     repo: spritsail/beets
+    tags:
+      - 'latest'
+      - '%label: io.spritsail.version.beets'
 
   notify:
     image: spritsail/notify

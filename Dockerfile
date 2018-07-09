@@ -19,7 +19,7 @@ ADD entrypoint /
 RUN mkdir /config \
  && chmod +x /entrypoint \
  && apk add --no-cache py-pip openssl \
- && pip install flask beets discogs-client pyacoustid \
+ && pip install flask beets==${BEETS_VER} discogs-client pyacoustid \
  && wget -O- https://github.com/acoustid/chromaprint/releases/download/v${CHROMAPRINT_VER}/chromaprint-fpcalc-${CHROMAPRINT_VER}-linux-x86_64.tar.gz \
       | tar xz -C /tmp --strip-components=1 \
  && mv /tmp/fpcalc /usr/bin \
