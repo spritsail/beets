@@ -24,7 +24,7 @@ pipeline:
     repo: spritsail/beets
     tags:
       - 'latest'
-      - '%label: io.spritsail.version.beets'
+      - '%label io.spritsail.version.beets'
 
   notify:
     image: spritsail/notify
