@@ -1,6 +1,6 @@
 FROM spritsail/alpine:3.9
 
-ARG BEETS_VER=1.4.7
+ARG BEETS_VER=1.4.8
 ARG CHROMAPRINT_VER=1.4.3
 
 LABEL maintainer="Spritsail <beets@spritsail.io>" \
