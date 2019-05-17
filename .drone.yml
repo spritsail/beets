@@ -5,15 +5,12 @@ pipeline:
     repo: beets-dev
 
   test:
-    image: docker
+    image: spritsail/docker-test
     volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
-    commands:
-      - apk add --no-cache curl grep
-      - CON_NAME=$(docker run --rm -d -p 8337:8337 beets-dev)
-      - sleep 10  # Wait for plex to start!
-      - docker logs $$CON_NAME
-      - curl -sSL $(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $$CON_NAME):8337/stats | tee /dev/stderr | grep -q '{"albums":0,"items":0}'
-      - docker kill $$CON_NAME #Not really needed, but keeps things quick
+    repo: beets-dev
+    delay: 5
+    curl: :8337/stats
+    pipe: grep -q '{"albums":0,"items":0}'
 
   publish:
     image: spritsail/docker-publish
