@@ -1,4 +1,4 @@
-FROM spritsail/alpine:3.8
+FROM spritsail/alpine:3.9
 
 ARG BEETS_VER=1.4.7
 ARG CHROMAPRINT_VER=1.4.3
