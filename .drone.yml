@@ -1,30 +1,67 @@
-pipeline:
-  build:
-    image: spritsail/docker-build
-    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
+---
+kind: pipeline
+name: default
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: always
+  image: spritsail/docker-build
+  settings:
     repo: beets-dev
 
-  test:
-    image: spritsail/docker-test
-    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
-    repo: beets-dev
-    delay: 5
+- name: test
+  pull: always
+  image: spritsail/docker-test
+  settings:
     curl: :8337/stats
-    pipe: grep -q '{"albums":0,"items":0}'
+    delay: 10
+    curl_opts: --header x-api-key:drone
+    pipe: |
+      tee /dev    /stderr |
+      grep -q '{"albums":0,"items":0}'
+    repo: beets-dev
+    verbose: true
 
-  publish:
-    image: spritsail/docker-publish
-    when: { branch: [ master ], event: [ push, tag, deployment ] }
-    volumes: [ '/var/run/docker.sock:/var/run/docker.sock' ]
-    secrets: [ docker_username, docker_password, microbadger_token ]
+- name: publish
+  pull: always
+  image: spritsail/docker-publish
+  settings:
     from: beets-dev
     repo: spritsail/beets
     tags:
-      - 'latest'
-      - '%label io.spritsail.version.beets'
+    - 'latest'
+    - '%label io.spritsail.version.beets | %auto'
+  environment:
+    DOCKER_PASSWORD:
+      from_secret: docker_password
+    DOCKER_USERNAME:
+      from_secret: docker_username
+  when:
+    branch:
+    - master
+    event:
+    - push
+    - tag
 
-  notify:
-    image: spritsail/notify
-    when: { status: [ success, failure ] }
-    secrets: [ webhook_url, notify_token ]
+- name: notify
+  pull: always
+  image: spritsail/notify
+  environment:
+    NOTIFY_TOKEN:
+      from_secret: notify_token
+    WEBHOOK_URL:
+      from_secret: webhook_url
+  when:
+    status:
+    - success
+    - failure
 
+---
+kind: signature
+hmac: ac8c82ac2588411b5d767236bf1f13b87b3757ea7786471ccedf130962d7f2bf
+
+...
