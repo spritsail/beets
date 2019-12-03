@@ -21,7 +21,7 @@ steps:
     delay: 10
     curl_opts: --header x-api-key:drone
     pipe: |
-      tee /dev    /stderr |
+      tee /dev/stderr |
       grep -q '{"albums":0,"items":0}'
     repo: beets-dev
     verbose: true
