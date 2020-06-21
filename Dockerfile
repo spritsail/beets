@@ -1,7 +1,7 @@
-FROM spritsail/alpine:3.11
+FROM spritsail/alpine:3.12
 
 ARG BEETS_VER=1.4.9
-ARG CHROMAPRINT_VER=1.4.3
+ARG CHROMAPRINT_VER=1.5.0
 
 LABEL maintainer="Spritsail <beets@spritsail.io>" \
       org.label-schema.vendor="Spritsail" \
@@ -21,9 +21,7 @@ RUN mkdir /config \
  && apk add --no-cache py-pip openssl \
  && pip install flask beets==${BEETS_VER} discogs-client pyacoustid \
  && wget -O- https://github.com/acoustid/chromaprint/releases/download/v${CHROMAPRINT_VER}/chromaprint-fpcalc-${CHROMAPRINT_VER}-linux-x86_64.tar.gz \
-      | tar xz -C /tmp --strip-components=1 \
- && mv /tmp/fpcalc /usr/bin \
- && rm -rf /tmp/*
+      | tar xz -C /usr/bin --strip-components=2
 
 EXPOSE 3887/tcp
 
